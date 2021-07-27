@@ -28,7 +28,7 @@ def get_test_connection_config(target_db='postgres'):
 
 def get_test_connection(target_db='postgres'):
     conn_config = get_test_connection_config(target_db)
-    conn_string = "host='{}' dbname='{}' user='{}' password='{}' port='{}'".format(conn_config['host'],
+    conn_string = "host='{}' dbname='{}' user='{}' password='{}' port='{}' options='-c statement_timeout=1000'".format(conn_config['host'],
                                                                                    conn_config['dbname'],
                                                                                    conn_config['user'],
                                                                                    conn_config['password'],
