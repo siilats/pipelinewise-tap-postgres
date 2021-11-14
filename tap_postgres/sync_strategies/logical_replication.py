@@ -7,10 +7,9 @@ import json
 import re
 import singer
 import warnings
-import singer.metadata as metadata
 
 from psycopg2 import sql
-from singer import utils, get_bookmark
+from singer import metadata, utils, get_bookmark
 from dateutil.parser import parse, UnknownTimezoneWarning, ParserError
 from functools import reduce
 
@@ -22,6 +21,7 @@ LOGGER = singer.get_logger('tap_postgres')
 
 UPDATE_BOOKMARK_PERIOD = 10000
 FALLBACK_DATETIME = '9999-12-31T23:59:59.999+00:00'
+FALLBACK_DATE = '9999-12-31T00:00:00+00:00'
 
 
 class ReplicationSlotNotFoundError(Exception):
@@ -287,7 +287,15 @@ def selected_value_to_singer_value_impl(elem, og_sql_datatype, conn_info):
         if isinstance(elem, datetime.date):
             # logical replication gives us dates as strings UNLESS they from an array
             return elem.isoformat() + 'T00:00:00+00:00'
-        return parse(elem).isoformat() + "+00:00"
+        try:
+            return parse(elem).isoformat() + "+00:00"
+        except ValueError as e:
+            match = re.match(r'year (\d+) is out of range', str(e))
+            if match and int(match.group(1)) > 9999:
+                LOGGER.warning('datetimes cannot handle years past 9999, returning %s for %s',
+                               FALLBACK_DATE, elem)
+                return FALLBACK_DATE
+            raise
     if sql_datatype == 'time with time zone':
         # time with time zone values will be converted to UTC and time zone dropped
         # Replace hour=24 with hour=0
@@ -660,8 +668,8 @@ def sync_tables(conn_info, logical_streams, state, end_lsn, state_file):
             else:
                 LOGGER.info('Lastest wal message received was %s', int_to_lsn(lsn_last_processed))
                 try:
-                    state_comitted_file = open(state_file)
-                    state_comitted = json.load(state_comitted_file)
+                    with open(state_file, mode="r", encoding="utf-8") as fh:
+                        state_comitted = json.load(fh)
                 except Exception:
                     LOGGER.debug('Unable to open and parse %s', state_file)
                 finally:

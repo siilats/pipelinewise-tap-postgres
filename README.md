@@ -62,10 +62,13 @@ Full list of options in `config.json`:
 | dbname                              | String  | Yes        | PostgreSQL database name                                      |
 | filter_schemas                      | String  | No         | Comma separated schema names to scan only the required schemas to improve the performance of data extraction. (Default: None) |
 | ssl                                 | String  | No         | If set to `"true"` then use SSL via postgres sslmode `require` option. If the server does not accept SSL connections or the client certificate is not recognized the connection will fail. (Default: None) |
-| logical_poll_seconds                | Integer | No         | Stop running the tap when no data received from wal after certain number of seconds. (Default: 10800) |
+| logical_poll_total_seconds          | Integer | No         | Stop running the tap when no data received from wal after certain number of seconds. (Default: 10800) |
 | break_at_end_lsn                    | Boolean | No         | Stop running the tap if the newly received lsn is after the max lsn that was detected when the tap started. (Default: true) |
 | max_run_seconds                     | Integer | No         | Stop running the tap after certain number of seconds. (Default: 43200) |
 | debug_lsn                           | String  | No         | If set to `"true"` then add `_sdc_lsn` property to the singer messages to debug postgres LSN position in the WAL stream. (Default: None) |
+| tap_id                              | String  | No         | ID of the pipeline/tap (Default: None) |
+| itersize                            | Integer | No         | Size of PG cursor iterator when doing INCREMENTAL or FULL_TABLE  (Default: 20000) |
+| default_replication_method          | String  | No         | Default replication method to use when no one is provided in the catalog (Values: `LOG_BASED`, `INCREMENTAL` or `FULL_TABLE`)  (Default: None) |
 
 
 ### Run the tap in Discovery Mode
